@@ -73,8 +73,8 @@
         });
 
        async function testSpeed(fileUrl, fileSizeMB, resultId) {
-    let proxyUrl = "https://cors-anywhere.herokuapp.com/";
-    fileUrl = proxyUrl + fileUrl; // Prepend the proxy to bypass CORS
+   let proxyUrl = "https://thingproxy.freeboard.io/fetch/";
+fileUrl = proxyUrl + encodeURIComponent(fileUrl);
 
     try {
         let response = await fetch(fileUrl);
