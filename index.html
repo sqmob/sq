@@ -73,9 +73,8 @@
         });
 
        async function testSpeed(fileUrl, fileSizeMB, resultId) {
-   let proxyUrl = "https://thingproxy.freeboard.io/fetch/";
+  let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
 fileUrl = proxyUrl + encodeURIComponent(fileUrl);
-
     try {
         let response = await fetch(fileUrl);
         if (!response.body) throw new Error("ReadableStream not supported");
