@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Data Speed Testing</title>
+    <title>Speed Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; padding: 20px; }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Optional: Keep background fixed during scrolling */
+            color: white; /* Make text readable against the background */
+        }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7);/*Add a semi-transparent black background*/ }
+        th, td { border: 1px solid white; padding: 10px; text-align: center; }
+        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7);/*Add a semi-transparent black background*/ }
         .light-green { background-color: lightgreen; }
         .light-red { background-color: lightcoral; }
         .light-blue { background-color: lightblue; }
         .light-yellow { background-color: lightyellow; }
+        h2{ background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block;}
     </style>
 </head>
 <body>
@@ -63,7 +73,7 @@
                 datasets: [{
                     label: 'Download Speed (Mbps)',
                     data: [],
-                    borderColor: 'blue', // Default color
+                    borderColor: 'blue',
                     borderWidth: 2,
                     fill: false
                 }]
@@ -91,7 +101,6 @@
 
             currentSpeedRecords = [];
 
-            // Remove previous color and add new color to button
             if (currentButton) {
                 currentButton.classList.remove(currentButton.classList[0]);
             }
@@ -126,7 +135,7 @@
 
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = currentSpeedRecords;
-                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", ""); // Set graph line color
+                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
                     speedChart.update();
 
                     return readChunks();
