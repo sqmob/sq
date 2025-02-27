@@ -74,6 +74,7 @@
         });
 
         let controller; // Global AbortController
+        let currentSpeedRecords = []; // Store speed records for stopTest()
 
         async function testSpeed(fileUrl, fileSizeMB, resultId) {
             stopTest(); // Stop any ongoing test before starting a new one
@@ -83,6 +84,8 @@
             let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
             fileUrl = proxyUrl + encodeURIComponent(fileUrl);
 
+            currentSpeedRecords = []; // Reset speed records for the new test
+
             try {
                 let response = await fetch(fileUrl, { signal });
                 if (!response.body) throw new Error("ReadableStream not supported");
@@ -90,7 +93,6 @@
                 let reader = response.body.getReader();
                 let startTime = performance.now();
                 let receivedBytes = 0;
-                let speedRecords = [];
                 let timestamps = [];
                 let firstChunkSkipped = false; // Flag to skip the first chunk
 
@@ -107,12 +109,12 @@
                         return readChunks(); // Skip this chunk and continue
                     }
 
-                    speedRecords.push(speedMbps);
+                    currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
 
                     // Update chart in real-time
                     speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = speedRecords;
+                    speedChart.data.datasets[0].data = currentSpeedRecords;
                     speedChart.update();
 
                     return readChunks();
@@ -121,8 +123,8 @@
                 await readChunks();
 
                 // Calculate final speed metrics (excluding the first chunk)
-                let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
-                let maxSpeed = Math.max(...speedRecords);
+                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
+                let maxSpeed = Math.max(...currentSpeedRecords);
 
                 document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
                 document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
@@ -130,6 +132,13 @@
             } catch (error) {
                 if (error.name === "AbortError") {
                     console.log("Speed test stopped.");
+                    // Calculate and display results if stopped during download
+                    if (currentSpeedRecords.length > 0) {
+                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
+                        let maxSpeed = Math.max(...currentSpeedRecords);
+                        document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
+                        document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+                    }
                 } else {
                     alert(`Error: ${error.message}`);
                 }
