@@ -67,7 +67,16 @@
             options: {
                 responsive: true,
                 scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
+                    x: {
+                        title: { display: true, text: 'Time (hh:mm:ss)' },
+                        type: 'time',
+                        time: {
+                            unit: 'second',
+                            displayFormats: {
+                                second: 'HH:mm:ss'
+                            }
+                        }
+                    },
                     y: { title: { display: true, text: 'Speed (Mbps)' } }
                 }
             }
@@ -98,9 +107,9 @@
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
+                    let currentTime = new Date(performance.now() - startTime);
                     receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
+                    let speedMbps = (receivedBytes * 8) / ((performance.now() - startTime) / 1000 * 1024 * 1024);
 
                     if (!firstChunkSkipped) {
                         firstChunkSkipped = true;
@@ -108,7 +117,7 @@
                     }
 
                     speedRecords.push(speedMbps);
-                    timestamps.push(currentTime.toFixed(2));
+                    timestamps.push(currentTime);
 
                     // Update chart in real-time
                     speedChart.data.labels = timestamps;
