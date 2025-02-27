@@ -55,10 +55,10 @@
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: [],
+                labels: [new Date()], // Initialize with a single date
                 datasets: [{
                     label: 'Download Speed (Mbps)',
-                    data: [],
+                    data: [0], // Initialize with a single 0 value
                     borderColor: 'blue',
                     borderWidth: 2,
                     fill: false
@@ -79,7 +79,7 @@
                     },
                     y: {
                         title: { display: true, text: 'Speed (Mbps)' },
-                        beginAtZero: true // Ensure y-axis starts at 0
+                        beginAtZero: true
                     }
                 }
             }
@@ -110,7 +110,7 @@
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = new Date(startTime + (performance.now() - startTime)); // Corrected time calculation
+                    let currentTime = new Date(startTime + (performance.now() - startTime));
                     receivedBytes += value.length;
                     let speedMbps = (receivedBytes * 8) / ((performance.now() - startTime) / 1000 * 1024 * 1024);
 
