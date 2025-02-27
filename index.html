@@ -52,44 +52,26 @@
     <canvas id="speedChart"></canvas>
 
     <script>
-        let speedChart; // Declare speedChart outside the initialization
-
-        function initializeChart() {
-            speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Download Speed (Mbps)',
-                        data: [],
-                        borderColor: 'blue',
-                        borderWidth: 2,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'Time (hh:mm:ss)' },
-                            type: 'time',
-                            time: {
-                                unit: 'second',
-                                displayFormats: {
-                                    second: 'HH:mm:ss'
-                                }
-                            }
-                        },
-                        y: {
-                            title: { display: true, text: 'Speed (Mbps)' },
-                            beginAtZero: true
-                        }
-                    }
+        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Download Speed (Mbps)',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Time (s)' } },
+                    y: { title: { display: true, text: 'Speed (Mbps)' } }
                 }
-            });
-        }
-
-        initializeChart(); // Initialize the chart on page load
+            }
+        });
 
         let controller; // Global AbortController
 
@@ -116,9 +98,9 @@
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = new Date(startTime + (performance.now() - startTime));
+                    let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
                     receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / ((performance.now() - startTime) / 1000 * 1024 * 1024);
+                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
 
                     if (!firstChunkSkipped) {
                         firstChunkSkipped = true;
@@ -126,7 +108,7 @@
                     }
 
                     speedRecords.push(speedMbps);
-                    timestamps.push(currentTime);
+                    timestamps.push(currentTime.toFixed(2));
 
                     // Update chart in real-time
                     speedChart.data.labels = timestamps;
