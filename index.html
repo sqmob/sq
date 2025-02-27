@@ -10,15 +10,15 @@
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
         table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        canvas { margin-top: 20px; width: 100%; max-width: 600px; height: 300px; }
     </style>
 </head>
 <body>
     <h2>Speed Test</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 1000, 'result1')">Test Speed - OVH</button>
-    <button onclick="testSpeed('http://ipv4.download.thinkbroadband.com/100MB.zip', 10000, 'result2')">Test Speed - AMS2</button>
-    <button onclick="testSpeed('http://speedtest.mtl2.ca.leaseweb.net/10000mb.bin', 10000, 'result3')">Test Speed - MTL2</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4')">Test Speed - Singapore</button>
+    <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 'result1')">Test Speed - OVH</button>
+    <button onclick="testSpeed('http://ipv4.download.thinkbroadband.com/100MB.zip', 'result2')">Test Speed - AMS2</button>
+    <button onclick="testSpeed('http://speedtest.mtl2.ca.leaseweb.net/10000mb.bin', 'result3')">Test Speed - MTL2</button>
+    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 'result4')">Test Speed - Singapore</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -52,7 +52,15 @@
     <canvas id="speedChart"></canvas>
     
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+        let controller; // Global AbortController
+
+        function getCurrentTime() {
+            let now = new Date();
+            return now.toLocaleTimeString(); // Format: hh:mm:ss AM/PM
+        }
+
+        let ctx = document.getElementById('speedChart').getContext('2d');
+        let speedChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
@@ -66,21 +74,19 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: { title: { display: true, text: 'Time (hh:mm:ss)' } },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+                    y: { 
+                        title: { display: true, text: 'Speed (Mbps)' },
+                        min: 0,
+                        suggestedMax: 50 // Default, will update dynamically
+                    }
                 }
             }
         });
 
-        let controller; // Global AbortController
-
-        function getCurrentTime() {
-            let now = new Date();
-            return now.toLocaleTimeString(); // Format: hh:mm:ss AM/PM
-        }
-
-        async function testSpeed(fileUrl, fileSizeMB, resultId) {
+        async function testSpeed(fileUrl, resultId) {
             stopTest(); // Stop any ongoing test before starting a new one
             controller = new AbortController();
             let signal = controller.signal;
@@ -95,25 +101,39 @@
                 let reader = response.body.getReader();
                 let firstSampleSkipped = false; // Ignore the first sample
                 let receivedBytes = 0;
+                let lastTimestamp = performance.now();
                 let speedRecords = [];
                 let timestamps = [];
+
+                // Clear previous chart data
+                speedChart.data.labels = [];
+                speedChart.data.datasets[0].data = [];
+                speedChart.update();
 
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = getCurrentTime(); // Get real-time clock value
-                    receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / ((timestamps.length + 1) * 1024 * 1024);
-                    
+                    let now = performance.now();
+                    let elapsedTime = (now - lastTimestamp) / 1000; // Convert ms to seconds
+                    lastTimestamp = now;
+
+                    if (elapsedTime === 0) return readChunks(); // Avoid division by zero
+
+                    receivedBytes = value.length;
+                    let speedMbps = (receivedBytes * 8) / (elapsedTime * 1024 * 1024);
+
                     if (!firstSampleSkipped) {
-                        firstSampleSkipped = true; // Ignore the first sample
-                        receivedBytes = 0; // Reset byte count
+                        firstSampleSkipped = true; // Ignore first sample
                         return readChunks();
                     }
 
                     speedRecords.push(speedMbps);
-                    timestamps.push(currentTime); // Update with actual time
+                    timestamps.push(getCurrentTime()); // Use real-time clock
+
+                    // Dynamically adjust the y-axis max value
+                    let maxSpeed = Math.max(...speedRecords);
+                    speedChart.options.scales.y.suggestedMax = Math.ceil(maxSpeed * 1.2); 
 
                     // Update chart
                     speedChart.data.labels = timestamps;
@@ -126,6 +146,10 @@
                 await readChunks();
 
                 // Remove the first sample before calculating stats
+                if (speedRecords.length > 1) {
+                    speedRecords.shift(); // Remove first invalid sample
+                }
+
                 if (speedRecords.length > 0) {
                     let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
                     let maxSpeed = Math.max(...speedRecords);
