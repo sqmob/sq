@@ -6,50 +6,68 @@
     <title>Speed Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; padding: 20px; }
+        body { text-align: center; font-family: Arial, sans-serif; padding: 20px; display: flex; }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
         table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        canvas { margin-top: 20px; width: 60%; max-width: 600px; }
+        #map-container { width: 40%; text-align: left; }
+        #world-map { width: 100%; max-width: 400px; }
+        #world-map path { fill: lightgray; }
+        #world-map path.europe { fill: lightgray; }
+        #world-map path.usa { fill: lightgray; }
+        #world-map path.asia { fill: lightgray; }
+        #world-map path.australia { fill: lightgray; }
     </style>
 </head>
 <body>
-    <h2>Speed Test</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 1000, 'result1')">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2')">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3')">Test Speed - Asia</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4')">Test Speed - Singapore</button>
-    <button onclick="stopTest()">🛑 Stop Test</button>
+    <div>
+        <h2>Speed Test</h2>
+        <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 1000, 'result1'); highlightRegion('europe')">Test Speed - OVH (Europe)</button>
+        <button onclick="testSpeed('http://ipv4.download.thinkbroadband.com/100MB.zip', 10000, 'result2'); highlightRegion('usa')">Test Speed - AMS2 (USA)</button>
+        <button onclick="testSpeed('http://speedtest.mtl2.ca.leaseweb.net/10000mb.bin', 10000, 'result3'); highlightRegion('asia')">Test Speed - MTL2 (Asia)</button>
+        <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4'); highlightRegion('australia')">Test Speed - Singapore (Australia)</button>
+        <button onclick="stopTest()">🛑 Stop Test</button>
 
-    <table>
-        <tr>
-            <th>Test Location</th>
-            <th>Average Speed (Mbps)</th>
-            <th>Maximum Speed (Mbps)</th>
-        </tr>
-        <tr>
-            <td>France</td>
-            <td id="avg-speed-result1">-</td>
-            <td id="max-speed-result1">-</td>
-        </tr>
-        <tr>
-            <td>USA</td>
-            <td id="avg-speed-result2">-</td>
-            <td id="max-speed-result2">-</td>
-        </tr>
-        <tr>
-            <td>Asia</td>
-            <td id="avg-speed-result3">-</td>
-            <td id="max-speed-result3">-</td>
-        </tr>
-        <tr>
-            <td>Singapore</td>
-            <td id="avg-speed-result4">-</td>
-            <td id="max-speed-result4">-</td>
-        </tr>
-    </table>
+        <table>
+            <tr>
+                <th>Test Location</th>
+                <th>Average Speed (Mbps)</th>
+                <th>Maximum Speed (Mbps)</th>
+            </tr>
+            <tr>
+                <td>OVH</td>
+                <td id="avg-speed-result1">-</td>
+                <td id="max-speed-result1">-</td>
+            </tr>
+            <tr>
+                <td>AMS2</td>
+                <td id="avg-speed-result2">-</td>
+                <td id="max-speed-result2">-</td>
+            </tr>
+            <tr>
+                <td>MTL2</td>
+                <td id="avg-speed-result3">-</td>
+                <td id="max-speed-result3">-</td>
+            </tr>
+            <tr>
+                <td>Singapore</td>
+                <td id="avg-speed-result4">-</td>
+                <td id="max-speed-result4">-</td>
+            </tr>
+        </table>
 
-    <canvas id="speedChart"></canvas>
+        <canvas id="speedChart"></canvas>
+    </div>
+    <div id="map-container">
+        <svg id="world-map" viewBox="0 0 1000 500">
+            <path class="europe" d="M 100 100 L 200 100 L 250 200 L 150 250 Z" />
+            <path class="usa" d="M 100 300 L 200 300 L 250 400 L 150 450 Z" />
+            <path class="asia" d="M 300 100 L 400 100 L 450 200 L 350 250 Z" />
+            <path class="australia" d="M 300 300 L 400 300 L 450 400 L 350 450 Z" />
+            <path class="rest" d="M 0 0 L 1000 0 L 1000 500 L 0 500 Z" />
+        </svg>
+    </div>
 
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
@@ -73,18 +91,18 @@
             }
         });
 
-        let controller; // Global AbortController
-        let currentSpeedRecords = []; // Store speed records for stopTest()
+        let controller;
+        let currentSpeedRecords = [];
 
         async function testSpeed(fileUrl, fileSizeMB, resultId) {
-            stopTest(); // Stop any ongoing test before starting a new one
+            stopTest();
             controller = new AbortController();
             let signal = controller.signal;
 
             let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
             fileUrl = proxyUrl + encodeURIComponent(fileUrl);
 
-            currentSpeedRecords = []; // Reset speed records for the new test
+            currentSpeedRecords = [];
 
             try {
                 let response = await fetch(fileUrl, { signal });
@@ -94,25 +112,24 @@
                 let startTime = performance.now();
                 let receivedBytes = 0;
                 let timestamps = [];
-                let firstChunkSkipped = false; // Flag to skip the first chunk
+                let firstChunkSkipped = false;
 
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
+                    let currentTime = (performance.now() - startTime) / 1000;
                     receivedBytes += value.length;
                     let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
 
                     if (!firstChunkSkipped) {
                         firstChunkSkipped = true;
-                        return readChunks(); // Skip this chunk and continue
+                        return readChunks();
                     }
 
                     currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
 
-                    // Update chart in real-time
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = currentSpeedRecords;
                     speedChart.update();
@@ -122,7 +139,6 @@
 
                 await readChunks();
 
-                // Calculate final speed metrics (excluding the first chunk)
                 let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
                 let maxSpeed = Math.max(...currentSpeedRecords);
 
@@ -132,7 +148,6 @@
             } catch (error) {
                 if (error.name === "AbortError") {
                     console.log("Speed test stopped.");
-                    // Calculate and display results if stopped during download
                     if (currentSpeedRecords.length > 0) {
                         let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
                         let maxSpeed = Math.max(...currentSpeedRecords);
@@ -152,6 +167,17 @@
                 console.log("Speed test aborted.");
             }
         }
-    </script>
-</body>
-</html>
+
+        function highlightRegion(region) {
+            let map = document.getElementById('world-map');
+            let paths = map.querySelectorAll('path');
+
+            paths.forEach(path => {
+                if (path.classList.contains(region)) {
+                    path.style.fill = 'lightblue';
+                } else if (!path.classList.contains('rest')){
+                    path.style.fill = 'lightgray';
+                }
+            });
+        }
+    </script
