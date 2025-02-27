@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speed Test</title>
+    <title>Network Data Speed Testing</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -13,18 +13,18 @@
             background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
             background-size: cover;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* Optional: Keep background fixed during scrolling */
-            color: white; /* Make text readable against the background */
+            background-attachment: fixed;
+            color: white;
         }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7);/*Add a semi-transparent black background*/ }
+        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); }
         th, td { border: 1px solid white; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7);/*Add a semi-transparent black background*/ }
+        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); }
         .light-green { background-color: lightgreen; }
         .light-red { background-color: lightcoral; }
         .light-blue { background-color: lightblue; }
         .light-yellow { background-color: lightyellow; }
-        h2{ background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block;}
+        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -116,19 +116,22 @@
                 let receivedBytes = 0;
                 let timestamps = [];
                 let firstChunkSkipped = false;
+                let firstChunkBytes = 0; // Store the size of the first chunk
 
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = (performance.now() - startTime) / 1000;
                     receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
 
                     if (!firstChunkSkipped) {
                         firstChunkSkipped = true;
-                        return readChunks();
+                        firstChunkBytes = value.length;
+                        return readChunks(); // Skip this chunk and continue
                     }
+
+                    let currentTime = (performance.now() - startTime) / 1000;
+                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024); // Exclude first chunk
 
                     currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
