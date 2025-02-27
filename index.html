@@ -52,38 +52,44 @@
     <canvas id="speedChart"></canvas>
 
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: [new Date()], // Initialize with a single date
-                datasets: [{
-                    label: 'Download Speed (Mbps)',
-                    data: [0], // Initialize with a single 0 value
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Time (hh:mm:ss)' },
-                        type: 'time',
-                        time: {
-                            unit: 'second',
-                            displayFormats: {
-                                second: 'HH:mm:ss'
+        let speedChart; // Declare speedChart outside the initialization
+
+        function initializeChart() {
+            speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Download Speed (Mbps)',
+                        data: [],
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Time (hh:mm:ss)' },
+                            type: 'time',
+                            time: {
+                                unit: 'second',
+                                displayFormats: {
+                                    second: 'HH:mm:ss'
+                                }
                             }
+                        },
+                        y: {
+                            title: { display: true, text: 'Speed (Mbps)' },
+                            beginAtZero: true
                         }
-                    },
-                    y: {
-                        title: { display: true, text: 'Speed (Mbps)' },
-                        beginAtZero: true
                     }
                 }
-            }
-        });
+            });
+        }
+
+        initializeChart(); // Initialize the chart on page load
 
         let controller; // Global AbortController
 
