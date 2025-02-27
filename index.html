@@ -15,7 +15,7 @@
 </head>
 <body>
     <h2>Speed Test</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1')">Test Speed - OVH</button>
+    <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 1000, 'result1')">Test Speed - OVH</button>
     <button onclick="testSpeed('http://ipv4.download.thinkbroadband.com/100MB.zip', 10000, 'result2')">Test Speed - AMS2</button>
     <button onclick="testSpeed('http://speedtest.mtl2.ca.leaseweb.net/10000mb.bin', 10000, 'result3')">Test Speed - MTL2</button>
     <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4')">Test Speed - Singapore</button>
@@ -67,13 +67,18 @@
             options: {
                 responsive: true,
                 scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
+                    x: { title: { display: true, text: 'Time (hh:mm:ss)' } },
                     y: { title: { display: true, text: 'Speed (Mbps)' } }
                 }
             }
         });
 
         let controller; // Global AbortController
+
+        function getCurrentTime() {
+            let now = new Date();
+            return now.toLocaleTimeString(); // Format: hh:mm:ss AM/PM
+        }
 
         async function testSpeed(fileUrl, fileSizeMB, resultId) {
             stopTest(); // Stop any ongoing test before starting a new one
@@ -88,21 +93,21 @@
                 if (!response.body) throw new Error("ReadableStream not supported");
 
                 let reader = response.body.getReader();
-                let startTime = performance.now();
+                let startTime = getCurrentTime(); // Get actual start time
                 let receivedBytes = 0;
                 let speedRecords = [];
-                let timestamps = [];
+                let timestamps = [startTime]; // Start with initial time
                 
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
+                    let currentTime = getCurrentTime(); // Get real-time clock value
                     receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
+                    let speedMbps = (receivedBytes * 8) / (timestamps.length * 1024 * 1024);
                     
                     speedRecords.push(speedMbps);
-                    timestamps.push(currentTime.toFixed(2));
+                    timestamps.push(currentTime); // Update with actual time
 
                     // Update chart in real-time
                     speedChart.data.labels = timestamps;
