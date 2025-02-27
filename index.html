@@ -99,5 +99,12 @@
                 let speedRecords = [];
                 let timestamps = [];
 
+                // Clear previous chart data
+                speedChart.data.labels = [];
+                speedChart.data.datasets[0].data = [];
+                speedChart.update();
+
                 async function readChunks() {
-                    let
+                    let { done, value } = await reader.read();
+                    if (done) return;
+
