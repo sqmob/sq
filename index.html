@@ -10,7 +10,7 @@
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
         table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        canvas { margin-top: 20px; width: 100%; max-width: 600px; height: 300px; }
     </style>
 </head>
 <body>
@@ -52,7 +52,15 @@
     <canvas id="speedChart"></canvas>
     
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+        let controller; // Global AbortController
+
+        function getCurrentTime() {
+            let now = new Date();
+            return now.toLocaleTimeString(); // Format: hh:mm:ss AM/PM
+        }
+
+        let ctx = document.getElementById('speedChart').getContext('2d');
+        let speedChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
@@ -66,19 +74,13 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: { title: { display: true, text: 'Time (hh:mm:ss)' } },
                     y: { title: { display: true, text: 'Speed (Mbps)' }, min: 0 }
                 }
             }
         });
-
-        let controller; // Global AbortController
-
-        function getCurrentTime() {
-            let now = new Date();
-            return now.toLocaleTimeString(); // Format: hh:mm:ss AM/PM
-        }
 
         async function testSpeed(fileUrl, resultId) {
             stopTest(); // Stop any ongoing test before starting a new one
@@ -93,18 +95,4 @@
                 if (!response.body) throw new Error("ReadableStream not supported");
 
                 let reader = response.body.getReader();
-                let firstSampleSkipped = false; // Ignore the first sample
-                let startTime = performance.now();
-                let receivedBytes = 0;
-                let speedRecords = [];
-                let timestamps = [];
-
-                // Clear previous chart data
-                speedChart.data.labels = [];
-                speedChart.data.datasets[0].data = [];
-                speedChart.update();
-
-                async function readChunks() {
-                    let { done, value } = await reader.read();
-                    if (done) return;
-
+                let firstSampleSkipped = false; // Ignore the first s
