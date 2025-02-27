@@ -77,7 +77,10 @@
                             }
                         }
                     },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+                    y: {
+                        title: { display: true, text: 'Speed (Mbps)' },
+                        beginAtZero: true // Ensure y-axis starts at 0
+                    }
                 }
             }
         });
@@ -107,7 +110,7 @@
                     let { done, value } = await reader.read();
                     if (done) return;
 
-                    let currentTime = new Date(performance.now() - startTime);
+                    let currentTime = new Date(startTime + (performance.now() - startTime)); // Corrected time calculation
                     receivedBytes += value.length;
                     let speedMbps = (receivedBytes * 8) / ((performance.now() - startTime) / 1000 * 1024 * 1024);
 
