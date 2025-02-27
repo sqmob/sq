@@ -93,23 +93,29 @@
                 if (!response.body) throw new Error("ReadableStream not supported");
 
                 let reader = response.body.getReader();
-                let startTime = getCurrentTime(); // Get actual start time
+                let firstSampleSkipped = false; // Ignore the first sample
                 let receivedBytes = 0;
                 let speedRecords = [];
-                let timestamps = [startTime]; // Start with initial time
-                
+                let timestamps = [];
+
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
                     let currentTime = getCurrentTime(); // Get real-time clock value
                     receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / (timestamps.length * 1024 * 1024);
+                    let speedMbps = (receivedBytes * 8) / ((timestamps.length + 1) * 1024 * 1024);
                     
+                    if (!firstSampleSkipped) {
+                        firstSampleSkipped = true; // Ignore the first sample
+                        receivedBytes = 0; // Reset byte count
+                        return readChunks();
+                    }
+
                     speedRecords.push(speedMbps);
                     timestamps.push(currentTime); // Update with actual time
 
-                    // Update chart in real-time
+                    // Update chart
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = speedRecords;
                     speedChart.update();
@@ -119,12 +125,14 @@
                 
                 await readChunks();
 
-                // Calculate final speed metrics
-                let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
-                let maxSpeed = Math.max(...speedRecords);
+                // Remove the first sample before calculating stats
+                if (speedRecords.length > 0) {
+                    let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
+                    let maxSpeed = Math.max(...speedRecords);
 
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+                    document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
+                    document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+                }
 
             } catch (error) {
                 if (error.name === "AbortError") {
