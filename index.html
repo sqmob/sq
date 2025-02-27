@@ -50,7 +50,7 @@
     </table>
 
     <canvas id="speedChart"></canvas>
-    
+
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
@@ -82,7 +82,7 @@
 
             let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
             fileUrl = proxyUrl + encodeURIComponent(fileUrl);
-            
+
             try {
                 let response = await fetch(fileUrl, { signal });
                 if (!response.body) throw new Error("ReadableStream not supported");
@@ -92,7 +92,8 @@
                 let receivedBytes = 0;
                 let speedRecords = [];
                 let timestamps = [];
-                
+                let firstChunkSkipped = false; // Flag to skip the first chunk
+
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
@@ -100,7 +101,12 @@
                     let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
                     receivedBytes += value.length;
                     let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
-                    
+
+                    if (!firstChunkSkipped) {
+                        firstChunkSkipped = true;
+                        return readChunks(); // Skip this chunk and continue
+                    }
+
                     speedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
 
@@ -111,10 +117,10 @@
 
                     return readChunks();
                 }
-                
+
                 await readChunks();
 
-                // Calculate final speed metrics
+                // Calculate final speed metrics (excluding the first chunk)
                 let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
                 let maxSpeed = Math.max(...speedRecords);
 
