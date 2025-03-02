@@ -30,11 +30,11 @@
 </head>
 <body>
     <h2>SQ Speed Testing</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green', this)">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red', this)">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue', this)">Test Speed - Asia</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow', this)">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink', this)">Local Speed Testing</button>
+    <button onclick="handleTestClick('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green', this)">Test Speed - France</button>
+    <button onclick="handleTestClick('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red', this)">Test Speed - USA</button>
+    <button onclick="handleTestClick('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue', this)">Test Speed - Asia</button>
+    <button onclick="handleTestClick('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow', this)">Test Speed - Singapore</button>
+    <button onclick="handleTestClick('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink', this)">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -182,12 +182,3 @@
 
                 let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
                 let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-
-            } catch (error) {
-                if (error.name === "AbortError") {
-                    console.log("Speed test stopped.");
-                    if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b,
