@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobitel Speed Test</title>
+    <title>SQ Speed Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -101,7 +101,24 @@
 
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-            // ... (your existing chart configuration) ...
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Download Speed (Mbps)',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Time (s)' } },
+                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+                }
+            }
         });
 
         let controller;
