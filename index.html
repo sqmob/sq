@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Single Link Download Speed Test</title>
+    <title>Direct Download with Speed Graph</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -11,38 +11,32 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
-        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        canvas {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 800px;
+            height: 400px;
+        }
     </style>
 </head>
 <body>
-    <h2>Single Link Download Speed Test</h2>
-    <button onclick="startDownload()">Start Download</button>
-    <button onclick="stopDownload()">Stop Download</button>
-
-    <table>
-        <tr>
-            <th>Average Speed (Mbps)</th>
-            <th>Maximum Speed (Mbps)</th>
-        </tr>
-        <tr>
-            <td id="avg-speed">-</td>
-            <td id="max-speed">-</td>
-        </tr>
-    </table>
-
+    <h2>Direct Download with Speed Graph</h2>
+    <a href="http://172.22.15.54/files/100MB.zip" id="downloadLink" download="100MB.zip">Download 100MB.zip</a>
     <canvas id="speedChart"></canvas>
 
     <script>
+        const downloadLink = document.getElementById('downloadLink');
+        const speedChartCanvas = document.getElementById('speedChart').getContext('2d');
         let speedChart;
-        let controller;
-        let currentSpeedRecords = [];
         let startTime;
+        let receivedBytes = 0;
+        let currentSpeedRecords = [];
+        let timestamps = [];
+        let firstChunkSkipped = false;
+        let firstChunkBytes = 0;
 
         function initializeChart() {
-            speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+            speedChart = new Chart(speedChartCanvas, {
                 type: 'line',
                 data: {
                     labels: [],
@@ -66,89 +60,70 @@
 
         initializeChart();
 
-        async function startDownload() {
-            controller = new AbortController();
-            let signal = controller.signal;
+        downloadLink.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default download behavior
 
-            // Using corsproxy.io as a proxy
-            const fileUrl = 'http://172.22.15.54/files/100MB.zip';
-            const proxiedFileUrl = `https://corsproxy.io/?${encodeURIComponent(fileUrl)}`;
-
-            console.log("Proxied URL:", proxiedFileUrl);
-
-            currentSpeedRecords = [];
             startTime = performance.now();
-            let receivedBytes = 0;
-            let timestamps = [];
-            let firstChunkSkipped = false;
-            let firstChunkBytes = 0;
+            receivedBytes = 0;
+            currentSpeedRecords = [];
+            timestamps = [];
+            firstChunkSkipped = false;
+            firstChunkBytes = 0;
 
-            try {
-                const response = await fetch(proxiedFileUrl, { signal });
-                console.log("Response status:", response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                if (!response.body) throw new Error("ReadableStream not supported");
+            fetch(downloadLink.href)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    if (!response.body) throw new Error("ReadableStream not supported");
 
-                let reader = response.body.getReader();
+                    const reader = response.body.getReader();
 
-                async function readChunks() {
-                    let { done, value } = await reader.read();
-                    if (done) return;
+                    function readChunks() {
+                        reader.read().then(({ done, value }) => {
+                            if (done) {
+                                return;
+                            }
 
-                    receivedBytes += value.length;
+                            receivedBytes += value.length;
 
-                    if (!firstChunkSkipped) {
-                        firstChunkSkipped = true;
-                        firstChunkBytes = value.length;
-                        return readChunks();
+                            if (!firstChunkSkipped) {
+                                firstChunkSkipped = true;
+                                firstChunkBytes = value.length;
+                                readChunks();
+                                return;
+                            }
+
+                            const currentTime = (performance.now() - startTime) / 1000;
+                            const speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
+
+                            currentSpeedRecords.push(speedMbps);
+                            timestamps.push(currentTime.toFixed(2));
+
+                            speedChart.data.labels = timestamps;
+                            speedChart.data.datasets[0].data = currentSpeedRecords;
+                            speedChart.update();
+
+                            readChunks();
+                        }).catch(error => {
+                            console.error("Download error:", error);
+                        });
                     }
 
-                    let currentTime = (performance.now() - startTime) / 1000;
-                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
+                    readChunks();
 
-                    currentSpeedRecords.push(speedMbps);
-                    timestamps.push(currentTime.toFixed(2));
+                    const a = document.createElement('a');
+                    a.href = downloadLink.href;
+                    a.download = downloadLink.download;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
 
-                    speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = currentSpeedRecords;
-                    speedChart.update();
-
-                    return readChunks();
-                }
-
-                await readChunks();
-
-                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById('avg-speed').innerText = avgSpeed.toFixed(2);
-                document.getElementById('max-speed').innerText = maxSpeed.toFixed(2);
-
-            } catch (error) {
-                console.error("Download error:", error);
-                if (error.name === "AbortError") {
-                    console.log("Download stopped.");
-                    if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                        let maxSpeed = Math.max(...currentSpeedRecords);
-                        document.getElementById('avg-speed').innerText = avgSpeed.toFixed(2);
-                        document.getElementById('max-speed').innerText = maxSpeed.toFixed(2);
-                    }
-                } else {
-                    alert("Error: " + error.message);
-                }
-            }
-        }
-
-        function stopDownload() {
-            if (controller) {
-                controller.abort();
-                controller = null;
-                console.log("Download aborted.");
-            }
-        }
+                })
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                });
+        });
     </script>
 </body>
 </html>
