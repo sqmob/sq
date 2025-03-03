@@ -100,9 +100,9 @@
     </table>
 
     <script>
-        let speedChart; // Declare speedChart outside
+        let speedChart;
 
-        function initializeChart() { //initialize chart function
+        function initializeChart() {
             speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -125,7 +125,7 @@
             });
         }
 
-        initializeChart(); //call the function
+        initializeChart();
 
         let controller;
         let currentSpeedRecords = [];
@@ -179,4 +179,14 @@
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = currentSpeedRecords;
                     speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
-                    speedChart
+                    speedChart.update();
+
+                    return readChunks();
+                }
+
+                await readChunks();
+
+                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
+                let maxSpeed = Math.max(...currentSpeedRecords);
+
+                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
