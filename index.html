@@ -30,12 +30,11 @@
 </head>
 <body>
     <h2>SQ Speed Testing</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green', event)">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red', event)">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue', event)">Test Speed - Asia</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow', event)">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink', event)">Local Speed Testing</button>
-    <button onclick="fastComTest()">Fast.com Test</button>
+    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
+    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
+    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - Asia</button>
+    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
+    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -69,11 +68,6 @@
             <td id="avg-speed-result5">-</td>
             <td id="max-speed-result5">-</td>
         </tr>
-        <tr>
-            <td>Fast.com</td>
-            <td id="avg-speed-fastcom">-</td>
-            <td id="max-speed-fastcom">-</td>
-        </tr>
     </table>
 
     <canvas id="speedChart"></canvas>
@@ -104,7 +98,7 @@
         let currentSpeedRecords = [];
         let currentButton;
 
-        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass, event) {
+        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
             stopTest();
             controller = new AbortController();
             let signal = controller.signal;
@@ -178,3 +172,15 @@
                     alert(`Error: ${error.message}`);
                 }
             }
+        }
+
+        function stopTest() {
+            if (controller) {
+                controller.abort();
+                controller = null;
+                console.log("Speed test aborted.");
+            }
+        }
+    </script>
+</body>
+</html>
