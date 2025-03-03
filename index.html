@@ -34,7 +34,7 @@
     <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
     <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - Asia</button>
     <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
+    <button onclick="testLocalSpeed()">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -73,112 +73,33 @@
     <canvas id="speedChart"></canvas>
 
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Download Speed (Mbps)',
-                    data: [],
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
-                }
-            }
-        });
-
-        let controller;
-        let currentSpeedRecords = [];
-        let currentButton;
-
-        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
-            stopTest();
-            controller = new AbortController();
-            let signal = controller.signal;
-
-            let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
-            fileUrl = proxyUrl + encodeURIComponent(fileUrl);
-
-            currentSpeedRecords = [];
-
-            if (currentButton) {
-                currentButton.classList.remove(currentButton.classList[0]);
-            }
-            currentButton = event.target;
-            currentButton.classList.add(colorClass);
-
+        async function testLocalSpeed() {
             try {
-                let response = await fetch(fileUrl, { signal });
-                if (!response.body) throw new Error("ReadableStream not supported");
+                let response = await fetch("http://172.22.15.54/files/100MB.zip", { method: "GET" });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
                 let reader = response.body.getReader();
-                let startTime = performance.now();
                 let receivedBytes = 0;
+                let startTime = performance.now();
+                let currentSpeedRecords = [];
                 let timestamps = [];
-                let firstChunkSkipped = false;
-                let firstChunkBytes = 0;
-
-                async function readChunks() {
+                
+                while (true) {
                     let { done, value } = await reader.read();
-                    if (done) return;
-
+                    if (done) break;
                     receivedBytes += value.length;
-
-                    if (!firstChunkSkipped) {
-                        firstChunkSkipped = true;
-                        firstChunkBytes = value.length;
-                        return readChunks();
-                    }
-
                     let currentTime = (performance.now() - startTime) / 1000;
-                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
-
+                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
                     currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
-
-                    speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = currentSpeedRecords;
-                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
-                    speedChart.update();
-
-                    return readChunks();
                 }
-
-                await readChunks();
 
                 let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
                 let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-
+                document.getElementById("avg-speed-result5").innerText = avgSpeed.toFixed(2);
+                document.getElementById("max-speed-result5").innerText = maxSpeed.toFixed(2);
             } catch (error) {
-                if (error.name === "AbortError") {
-                    console.log("Speed test stopped.");
-                    if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                        let maxSpeed = Math.max(...currentSpeedRecords);
-                        document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                        document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-                    }
-                } else {
-                    alert(`Error: ${error.message}`);
-                }
-            }
-        }
-
-        function stopTest() {
-            if (controller) {
-                controller.abort();
-                controller = null;
-                console.log("Speed test aborted.");
+                console.error("Fetch error:", error);
             }
         }
     </script>
