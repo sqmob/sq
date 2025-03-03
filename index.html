@@ -67,7 +67,6 @@
         initializeChart();
 
         async function startDownload() {
-            //stopDownload(); //removed.
             controller = new AbortController();
             let signal = controller.signal;
 
@@ -83,7 +82,11 @@
             let firstChunkBytes = 0;
 
             try {
-                let response = await fetch(proxiedFileUrl, { signal });
+                const response = await fetch(proxiedFileUrl, { signal });
+                console.log("Response status:", response.status); // Add this line
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 if (!response.body) throw new Error("ReadableStream not supported");
 
                 let reader = response.body.getReader();
@@ -122,6 +125,7 @@
                 document.getElementById('max-speed').innerText = maxSpeed.toFixed(2);
 
             } catch (error) {
+                console.error("Download error:", error); // Add this line
                 if (error.name === "AbortError") {
                     console.log("Download stopped.");
                     if (currentSpeedRecords.length > 0) {
