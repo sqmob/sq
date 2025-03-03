@@ -34,7 +34,8 @@
     <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
     <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - Asia</button>
     <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://fast.com', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
+    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
+    <button onclick="fastComTest()">Fast.com Test</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -67,6 +68,11 @@
             <td>Local</td>
             <td id="avg-speed-result5">-</td>
             <td id="max-speed-result5">-</td>
+        </tr>
+        <tr>
+            <td>Fast.com</td>
+            <td id="avg-speed-fastcom">-</td>
+            <td id="max-speed-fastcom">-</td>
         </tr>
     </table>
 
@@ -174,13 +180,11 @@
             }
         }
 
-        function stopTest() {
-            if (controller) {
-                controller.abort();
-                controller = null;
-                console.log("Speed test aborted.");
-            }
-        }
-    </script>
-</body>
-</html>
+        async function fastComTest() {
+            stopTest();
+            currentSpeedRecords = [];
+            speedChart.data.labels = [];
+            speedChart.data.datasets[0].data = [];
+            speedChart.update();
+            document.getElementById(`avg-speed-fastcom`).innerText = "-";
+            document.getElementById(`max-speed-fastcom`).innerText = "-";
