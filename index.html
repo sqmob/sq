@@ -100,26 +100,32 @@
     </table>
 
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Download Speed (Mbps)',
-                    data: [],
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+        let speedChart; // Declare speedChart outside
+
+        function initializeChart() { //initialize chart function
+            speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Download Speed (Mbps)',
+                        data: [],
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: 'Time (s)' } },
+                        y: { title: { display: true, text: 'Speed (Mbps)' } }
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        initializeChart(); //call the function
 
         let controller;
         let currentSpeedRecords = [];
@@ -173,21 +179,4 @@
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = currentSpeedRecords;
                     speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
-                    speedChart.update();
-
-                    return readChunks();
-                }
-
-                await readChunks();
-
-                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-
-            } catch (error) {
-                if (error.name === "AbortError") {
-                    console.log("Speed test stopped.");
-                    if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b)
+                    speedChart
