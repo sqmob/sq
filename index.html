@@ -67,12 +67,14 @@
         initializeChart();
 
         async function startDownload() {
-            stopDownload(); // Stop any previous download
+            stopDownload();
 
             controller = new AbortController();
             let signal = controller.signal;
 
-            const fileUrl = 'http://172.22.15.54/files/100MB.zip'; // Your download link
+            let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
+            const fileUrl = 'http://172.22.15.54/files/100MB.zip';
+            const proxiedFileUrl = proxyUrl + encodeURIComponent(fileUrl);
 
             currentSpeedRecords = [];
             startTime = performance.now();
@@ -82,7 +84,7 @@
             let firstChunkBytes = 0;
 
             try {
-                let response = await fetch(fileUrl, { signal });
+                let response = await fetch(proxiedFileUrl, { signal });
                 if (!response.body) throw new Error("ReadableStream not supported");
 
                 let reader = response.body.getReader();
