@@ -17,9 +17,9 @@
             color: white;
         }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); }
+        table { margin-top: 20px; width: 45%; margin-left: 1%; margin-right: 1%; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); display: inline-block; vertical-align: top;}
         th, td { border: 1px solid white; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); }
+        canvas { margin-top: 20px; width: 60%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); display: inline-block; vertical-align: top; margin-right: 1%;}
         .light-green { background-color: lightgreen; }
         .light-red { background-color: lightcoral; }
         .light-blue { background-color: lightblue; }
@@ -30,11 +30,11 @@
 </head>
 <body>
     <h2>SQ Speed Testing</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - Asia</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
+    <button onclick="handleTestClick('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green', this)">Test Speed - France</button>
+    <button onclick="handleTestClick('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red', this)">Test Speed - USA</button>
+    <button onclick="handleTestClick('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue', this)">Test Speed - Asia</button>
+    <button onclick="handleTestClick('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow', this)">Test Speed - Singapore</button>
+    <button onclick="handleTestClick('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink', this)">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
 
     <table>
@@ -72,6 +72,33 @@
 
     <canvas id="speedChart"></canvas>
 
+    <table id="userDetailsTable" style="display: inline-block; vertical-align: top; margin-top: 20px; width: 30%; background-color: rgba(0, 0, 0, 0.7); border-collapse: collapse;">
+        <tr>
+            <th>User Details</th>
+            <th>Information</th>
+        </tr>
+        <tr>
+            <td>IP Address</td>
+            <td id="ip_address_display">-</td>
+        </tr>
+        <tr>
+            <td>ISP</td>
+            <td id="isp_display">-</td>
+        </tr>
+        <tr>
+            <td>Location</td>
+            <td id="location_display">-</td>
+        </tr>
+        <tr>
+            <td>Latitude</td>
+            <td id="gps_location_display_lat">-</td>
+        </tr>
+        <tr>
+            <td>Longitude</td>
+            <td id="gps_location_display_lon">-</td>
+        </tr>
+    </table>
+
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
@@ -98,7 +125,7 @@
         let currentSpeedRecords = [];
         let currentButton;
 
-        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
+        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass, clickedButton) {
             stopTest();
             controller = new AbortController();
             let signal = controller.signal;
@@ -111,7 +138,7 @@
             if (currentButton) {
                 currentButton.classList.remove(currentButton.classList[0]);
             }
-            currentButton = event.target;
+            currentButton = clickedButton;
             currentButton.classList.add(colorClass);
 
             try {
@@ -163,24 +190,4 @@
                 if (error.name === "AbortError") {
                     console.log("Speed test stopped.");
                     if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                        let maxSpeed = Math.max(...currentSpeedRecords);
-                        document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                        document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-                    }
-                } else {
-                    alert(`Error: ${error.message}`);
-                }
-            }
-        }
-
-        function stopTest() {
-            if (controller) {
-                controller.abort();
-                controller = null;
-                console.log("Speed test aborted.");
-            }
-        }
-    </script>
-</body>
-</html>
+                        let avgSpeed = currentSpeedRecords.reduce((a, b)
