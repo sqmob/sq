@@ -17,89 +17,48 @@
             color: white;
         }
         button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 45%; margin-left: 1%; margin-right: 1%; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); display: inline-block; vertical-align: top;}
+        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); }
         th, td { border: 1px solid white; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 60%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); display: inline-block; vertical-align: top; margin-right: 1%;}
-        .light-green { background-color: lightgreen; }
-        .light-red { background-color: lightcoral; }
-        .light-blue { background-color: lightblue; }
-        .light-yellow { background-color: lightyellow; }
-        .light-pink { background-color: lightpink; }
+        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); }
         h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; }
     </style>
 </head>
 <body>
     <h2>SQ Speed Testing</h2>
-    <button onclick="handleTestClick('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green', this)">Test Speed - France</button>
-    <button onclick="handleTestClick('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red', this)">Test Speed - USA</button>
-    <button onclick="handleTestClick('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue', this)">Test Speed - Asia</button>
-    <button onclick="handleTestClick('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow', this)">Test Speed - Singapore</button>
-    <button onclick="handleTestClick('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink', this)">Local Speed Testing</button>
+    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1')">Test Speed - France</button>
+    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2')">Test Speed - USA</button>
+    <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3')">Test Speed - Asia</button>
+    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4')">Test Speed - Singapore</button>
+    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5')">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
-
+    
     <table>
-        <tr>
-            <th>Test Location</th>
-            <th>Average Speed (Mbps)</th>
-            <th>Maximum Speed (Mbps)</th>
-        </tr>
-        <tr>
-            <td>France</td>
-            <td id="avg-speed-result1">-</td>
-            <td id="max-speed-result1">-</td>
-        </tr>
-        <tr>
-            <td>USA</td>
-            <td id="avg-speed-result2">-</td>
-            <td id="max-speed-result2">-</td>
-        </tr>
-        <tr>
-            <td>Asia</td>
-            <td id="avg-speed-result3">-</td>
-            <td id="max-speed-result3">-</td>
-        </tr>
-        <tr>
-            <td>Singapore</td>
-            <td id="avg-speed-result4">-</td>
-            <td id="max-speed-result4">-</td>
-        </tr>
-        <tr>
-            <td>Local</td>
-            <td id="avg-speed-result5">-</td>
-            <td id="max-speed-result5">-</td>
-        </tr>
+        <tr><th>ISP Details</th><th>Information</th></tr>
+        <tr><td>IP Address</td><td id="ip-address">-</td></tr>
+        <tr><td>ISP</td><td id="isp">-</td></tr>
+        <tr><td>City</td><td id="city">-</td></tr>
+        <tr><td>Region</td><td id="region">-</td></tr>
+        <tr><td>Country</td><td id="country">-</td></tr>
     </table>
 
     <canvas id="speedChart"></canvas>
-
-    <table id="userDetailsTable" style="display: inline-block; vertical-align: top; margin-top: 20px; width: 30%; background-color: rgba(0, 0, 0, 0.7); border-collapse: collapse;">
-        <tr>
-            <th>User Details</th>
-            <th>Information</th>
-        </tr>
-        <tr>
-            <td>IP Address</td>
-            <td id="ip_address_display">-</td>
-        </tr>
-        <tr>
-            <td>ISP</td>
-            <td id="isp_display">-</td>
-        </tr>
-        <tr>
-            <td>Location</td>
-            <td id="location_display">-</td>
-        </tr>
-        <tr>
-            <td>Latitude</td>
-            <td id="gps_location_display_lat">-</td>
-        </tr>
-        <tr>
-            <td>Longitude</td>
-            <td id="gps_location_display_lon">-</td>
-        </tr>
-    </table>
-
+    
     <script>
+        async function fetchISPDetails() {
+            try {
+                let response = await fetch('https://ipinfo.io/json?token=YOUR_TOKEN_HERE');
+                let data = await response.json();
+                document.getElementById('ip-address').innerText = data.ip || '-';
+                document.getElementById('isp').innerText = data.org || '-';
+                document.getElementById('city').innerText = data.city || '-';
+                document.getElementById('region').innerText = data.region || '-';
+                document.getElementById('country').innerText = data.country || '-';
+            } catch (error) {
+                console.error('Failed to fetch ISP details:', error);
+            }
+        }
+        fetchISPDetails();
+
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
             data: {
@@ -123,23 +82,15 @@
 
         let controller;
         let currentSpeedRecords = [];
-        let currentButton;
 
-        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass, clickedButton) {
+        async function testSpeed(fileUrl, fileSizeMB, resultId) {
             stopTest();
             controller = new AbortController();
             let signal = controller.signal;
 
             let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
             fileUrl = proxyUrl + encodeURIComponent(fileUrl);
-
             currentSpeedRecords = [];
-
-            if (currentButton) {
-                currentButton.classList.remove(currentButton.classList[0]);
-            }
-            currentButton = clickedButton;
-            currentButton.classList.add(colorClass);
 
             try {
                 let response = await fetch(fileUrl, { signal });
@@ -149,36 +100,39 @@
                 let startTime = performance.now();
                 let receivedBytes = 0;
                 let timestamps = [];
-                let firstChunkSkipped = false;
-                let firstChunkBytes = 0;
 
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
 
                     receivedBytes += value.length;
-
-                    if (!firstChunkSkipped) {
-                        firstChunkSkipped = true;
-                        firstChunkBytes = value.length;
-                        return readChunks();
-                    }
-
                     let currentTime = (performance.now() - startTime) / 1000;
-                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
-
+                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
+                    
                     currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
 
                     speedChart.data.labels = timestamps;
                     speedChart.data.datasets[0].data = currentSpeedRecords;
-                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
                     speedChart.update();
 
                     return readChunks();
                 }
-
                 await readChunks();
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    alert(`Error: ${error.message}`);
+                }
+            }
+        }
 
-                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                let maxSpeed = Math.max(...currentSpeedRecords);
+        function stopTest() {
+            if (controller) {
+                controller.abort();
+                controller = null;
+                console.log("Speed test aborted.");
+            }
+        }
+    </script>
+</body>
+</html>
