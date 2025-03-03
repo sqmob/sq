@@ -3,39 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Download</title>
+    <title>Download File</title>
 </head>
 <body>
-    <h2>Direct Download</h2>
-    <a href="http://172.22.15.54/files/100MB.zip" id="downloadLink" download="100MB.zip">Download 100MB.zip</a>
-
-    <script>
-        const downloadLink = document.getElementById('downloadLink');
-
-        downloadLink.addEventListener('click', function(event) {
-            event.preventDefault();
-
-            fetch(downloadLink.href)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = downloadLink.download;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                })
-                .catch(error => {
-                    console.error("Fetch error:", error);
-                });
-        });
-    </script>
+    <h1>Download 100MB File</h1>
+    <p> download the file:</p>
+    <a href="http://172.22.15.54/files/100MB.zip" download>Download 100MB.zip</a>
 </body>
 </html>
