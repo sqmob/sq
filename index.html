@@ -3,72 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Download with Speed Graph</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        canvas {
-            margin-top: 20px;
-            width: 80%;
-            max-width: 800px;
-            height: 400px;
-        }
-    </style>
+    <title>Direct Download</title>
 </head>
 <body>
-    <h2>Direct Download with Speed Graph</h2>
+    <h2>Direct Download</h2>
     <a href="http://172.22.15.54/files/100MB.zip" id="downloadLink" download="100MB.zip">Download 100MB.zip</a>
-    <canvas id="speedChart"></canvas>
 
     <script>
         const downloadLink = document.getElementById('downloadLink');
-        const speedChartCanvas = document.getElementById('speedChart').getContext('2d');
-        let speedChart;
-        let startTime;
-        let receivedBytes = 0;
-        let currentSpeedRecords = [];
-        let timestamps = [];
-        let firstChunkSkipped = false;
-        let firstChunkBytes = 0;
-
-        function initializeChart() {
-            speedChart = new Chart(speedChartCanvas, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Download Speed (Mbps)',
-                        data: [],
-                        borderColor: 'blue',
-                        borderWidth: 2,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { title: { display: true, text: 'Time (s)' } },
-                        y: { title: { display: true, text: 'Speed (Mbps)' } }
-                    }
-                }
-            });
-        }
-
-        initializeChart();
 
         downloadLink.addEventListener('click', function(event) {
             event.preventDefault();
-
-            startTime = performance.now();
-            receivedBytes = 0;
-            currentSpeedRecords = [];
-            timestamps = [];
-            firstChunkSkipped = false;
-            firstChunkBytes = 0;
 
             fetch(downloadLink.href)
                 .then(response => {
@@ -79,40 +24,13 @@
                 })
                 .then(blob => {
                     const url = window.URL.createObjectURL(blob);
-
-                    // Create a temporary anchor element
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = downloadLink.download;
-
-                    // Trigger the download immediately
-                    a.style.display = 'none'; // Hide the element
                     document.body.appendChild(a);
                     a.click();
-
-                    // Clean up after download
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
-
-                    // Speed graph logic
-                    const contentLength = blob.size;
-                    let downloadedBytes = 0;
-                    const interval = setInterval(() => {
-                        downloadedBytes = receivedBytes;
-                        if (downloadedBytes >= contentLength) {
-                            clearInterval(interval);
-                        }
-                        const currentTime = (performance.now() - startTime) / 1000;
-                        const speedMbps = ((downloadedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
-
-                        currentSpeedRecords.push(speedMbps);
-                        timestamps.push(currentTime.toFixed(2));
-
-                        speedChart.data.labels = timestamps;
-                        speedChart.data.datasets[0].data = currentSpeedRecords;
-                        speedChart.update();
-
-                    }, 250); // Update every 250 milliseconds
                 })
                 .catch(error => {
                     console.error("Fetch error:", error);
