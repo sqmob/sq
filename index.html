@@ -6,37 +6,78 @@
     <title>Mobitel Speed Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: white;
-        }
-        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; background-color: rgba(0, 0, 0, 0.7); }
-        th, td { border: 1px solid white; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; background-color: rgba(0, 0, 0, 0.7); }
+      body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers everything horizontally */
+    justify-content: center; /* Centers everything vertically */
+    min-height: 100vh; /* Ensures full viewport height */
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center aligns content horizontally */
+    justify-content: center;
+    width: 100%;
+}
+        
+       button {
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+table {
+    margin-top: 20px;
+    width: 80%; /* Adjusted width to be more mobile-friendly */
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+        th, td {
+    border: 1px solid white;
+    padding: 10px;
+    text-align: center;
+}
+        canvas {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+    background-color: rgba(0, 0, 0, 0.7);
+}
         .light-green { background-color: lightgreen; }
         .light-red { background-color: lightcoral; }
         .light-blue { background-color: lightblue; }
         .light-yellow { background-color: lightyellow; }
         .light-pink { background-color: lightpink; }
-        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; }
+        h2 {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    display: inline-block;
+}
     </style>
 </head>
 <body>
+     <div class="container">
     <h2>SQ Speed Testing</h2>
+         <div class="buttons-container">
     <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
     <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
     <button onclick="testSpeed('http://2aqualservsweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - Asia</button>
     <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
     <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result5', 'light-pink')">Local Speed Testing</button>
     <button onclick="stopTest()">🛑 Stop Test</button>
-
+  </div>
     <table>
         <tr>
             <th>Test Location</th>
@@ -71,7 +112,7 @@
     </table>
 
     <canvas id="speedChart"></canvas>
-
+</div>
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
