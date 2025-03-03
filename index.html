@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Direct Download with Speed Graph</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         body {
             text-align: center;
@@ -61,7 +61,7 @@
         initializeChart();
 
         downloadLink.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default download behavior
+            event.preventDefault();
 
             startTime = performance.now();
             receivedBytes = 0;
@@ -75,54 +75,44 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    if (!response.body) throw new Error("ReadableStream not supported");
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
 
-                    const reader = response.body.getReader();
-                    const chunks = [];
+                    // Create a temporary anchor element
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = downloadLink.download;
 
-                    function readChunks() {
-                        reader.read().then(({ done, value }) => {
-                            if (done) {
-                                const blob = new Blob(chunks);
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = downloadLink.download;
-                                document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                document.body.removeChild(a);
-                                return;
-                            }
+                    // Trigger the download immediately
+                    a.style.display = 'none'; // Hide the element
+                    document.body.appendChild(a);
+                    a.click();
 
-                            chunks.push(value);
-                            receivedBytes += value.length;
+                    // Clean up after download
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
 
-                            if (!firstChunkSkipped) {
-                                firstChunkSkipped = true;
-                                firstChunkBytes = value.length;
-                                readChunks();
-                                return;
-                            }
+                    // Speed graph logic
+                    const contentLength = blob.size;
+                    let downloadedBytes = 0;
+                    const interval = setInterval(() => {
+                        downloadedBytes = receivedBytes;
+                        if (downloadedBytes >= contentLength) {
+                            clearInterval(interval);
+                        }
+                        const currentTime = (performance.now() - startTime) / 1000;
+                        const speedMbps = ((downloadedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
 
-                            const currentTime = (performance.now() - startTime) / 1000;
-                            const speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
+                        currentSpeedRecords.push(speedMbps);
+                        timestamps.push(currentTime.toFixed(2));
 
-                            currentSpeedRecords.push(speedMbps);
-                            timestamps.push(currentTime.toFixed(2));
+                        speedChart.data.labels = timestamps;
+                        speedChart.data.datasets[0].data = currentSpeedRecords;
+                        speedChart.update();
 
-                            speedChart.data.labels = timestamps;
-                            speedChart.data.datasets[0].data = currentSpeedRecords;
-                            speedChart.update();
-
-                            readChunks();
-                        }).catch(error => {
-                            console.error("Download error:", error);
-                        });
-                    }
-
-                    readChunks();
-
+                    }, 250); // Update every 250 milliseconds
                 })
                 .catch(error => {
                     console.error("Fetch error:", error);
