@@ -70,11 +70,11 @@
             controller = new AbortController();
             let signal = controller.signal;
 
-            let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
+            // Using corsproxy.io as a proxy
             const fileUrl = 'http://172.22.15.54/files/100MB.zip';
-            const proxiedFileUrl = proxyUrl + encodeURIComponent(fileUrl);
+            const proxiedFileUrl = `https://corsproxy.io/?${encodeURIComponent(fileUrl)}`;
 
-            console.log("Proxied URL:", proxiedFileUrl); // Debugging line
+            console.log("Proxied URL:", proxiedFileUrl);
 
             currentSpeedRecords = [];
             startTime = performance.now();
