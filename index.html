@@ -131,6 +131,10 @@
         let currentSpeedRecords = [];
         let currentButton;
 
+        function handleTestClick(fileUrl, fileSizeMB, resultId, colorClass, clickedButton) {
+            testSpeed(fileUrl, fileSizeMB, resultId, colorClass, clickedButton);
+        }
+
         async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass, clickedButton) {
             stopTest();
             controller = new AbortController();
@@ -186,7 +190,4 @@
 
                 await readChunks();
 
-                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
+                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0)
