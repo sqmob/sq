@@ -67,8 +67,7 @@
         initializeChart();
 
         async function startDownload() {
-            stopDownload();
-
+            //stopDownload(); //removed.
             controller = new AbortController();
             let signal = controller.signal;
 
