@@ -24,36 +24,10 @@
 .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;}
 button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px;}
 table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto; border-collapse: collapse;
-							 
-								 
-					
-	   
-			   
-							
-					  
-						 
-						   
-	   
-			  
-						  
-					
-						  
-						   
-							
-								  
+									  
     background-color: rgba(0, 0, 0, 0.7); }
-	   
-			   
-        th, td { border: 1px solid white; padding: 10px; text-align: center;}
+	        th, td { border: 1px solid white; padding: 10px; text-align: center;}
         canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
-						   
-	   
-			   
-						  
-					 
-						  
-											  
-								 
                 border-radius: 5px;}
 	   
         .light-green { background-color: lightgreen; }
@@ -245,17 +219,28 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
 
 
         async function fetchISPDetails() {
-            try {
-                let response = await fetch("http://ip-api.com/json/");
-                let data = await response.json();
-                document.getElementById("ip-address").innerText = `IP Address: ${data.query}`;
-                document.getElementById("isp").innerText = `ISP: ${data.isp}`;
-            } catch {
-                document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
-                document.getElementById("isp").innerText = "ISP: Unable to fetch";
-            }
-        }
+           try {
+        // First, get the user's IP address
+        let ipResponse = await fetch("https://api64.ipify.org?format=json");
+        let ipData = await ipResponse.json();
+        let userIP = ipData.ip;
 
+        // Then, get ISP details using the IP
+        let ispResponse = await fetch(`https://ipwho.is/${userIP}`);
+        let ispData = await ispResponse.json();
+
+        if (ispData.success) {
+            document.getElementById("ip-address").innerText = `IP Address: ${ispData.ip}`;
+            document.getElementById("isp").innerText = `ISP: ${ispData.isp}`;
+        } else {
+            document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
+            document.getElementById("isp").innerText = "ISP: Unable to fetch";
+        }
+    } catch (error) {
+        document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
+        document.getElementById("isp").innerText = "ISP: Unable to fetch";
+    }
+}
         fetchISPDetails();
 						  
     </script>
