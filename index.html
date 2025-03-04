@@ -152,7 +152,7 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
                     receivedBytes += value.length;
 
                     if (!firstChunkSkipped) {
-                        /*firstChunkSkipped = true; */
+                        firstChunkSkipped = true;
                         firstChunkBytes = value.length;
                         return readChunks();
                     } 
