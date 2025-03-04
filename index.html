@@ -1,211 +1,176 @@
-<!DOCTYPE html> 
-<html lang="en"> 
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobitel Speed Testing</title>
+    <title>Download Speed Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      body {
-    text-align: center;
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    justify-content: center; 
-    min-height: 100vh; 
-}
-.container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;}
-button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px;}
-table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto; border-collapse: collapse;
-    background-color: rgba(0, 0, 0, 0.7); }
-        th, td { border: 1px solid white; padding: 10px; text-align: center;}
-        canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
-                border-radius: 5px;}
-        .light-green { background-color: lightgreen; }
-        .light-red { background-color: lightcoral; }
-        .light-blue { background-color: lightblue; }
-        .light-yellow { background-color: lightyellow; }
-        .light-pink { background-color: lightpink; }
-        .light-brown { background-color: #D2B48C; }
-        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; border-radius: 10px;}
-       /* footer {background-color: lightgrey;color: black; text-align: center; padding: 10px; margin-top: 20px; width: 100%; font-size: 14px;
-} */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chartContainer {
+            width: 80%;
+            margin: 20px auto;
+        }
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-     <div class="container">
-    <h2>Network Data Speed Benchmarker</h2>
-         <div class="buttons-container">
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
-    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
-    <button onclick="stopTest()">🛑 Stop Test</button>
-  </div>
+    <h1>Download Speed Monitor</h1>
+    <button id="startDownload">Start Download</button>
+    <button id="stopDownload" disabled>Stop Download</button>
+    <div id="chartContainer">
+        <canvas id="speedChart"></canvas>
+    </div>
     <table>
-        <tr>
-            <th>Test Location</th>
-            <th>Average Speed (Mbps)</th>
-            <th>Maximum Speed (Mbps)</th>
-        </tr>
-        <tr>
-            <td>France</td>
-            <td id="avg-speed-result1">-</td>
-            <td id="max-speed-result1">-</td>
-        </tr>
-        <tr>
-            <td>USA</td>
-            <td id="avg-speed-result2">-</td>
-            <td id="max-speed-result2">-</td>
-        </tr>
-        <tr>
-            <td>UK</td>
-            <td id="avg-speed-result3">-</td>
-            <td id="max-speed-result3">-</td>
-        </tr>
-        <tr>
-            <td>Singapore</td>
-            <td id="avg-speed-result4">-</td>
-            <td id="max-speed-result4">-</td>
-        </tr>
-        <tr>
-            <td>Qatar</td>
-            <td id="avg-speed-result5">-</td>
-            <td id="max-speed-result5">-</td>
-        </tr>
-        
-        <tr>
-            <td>Local</td>
-            <td id="avg-speed-result6">-</td>
-            <td id="max-speed-result6">-</td>
-        </tr>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Average Speed</td>
+                <td id="averageSpeed">0 Mbps</td>
+            </tr>
+            <tr>
+                <td>Maximum Speed</td>
+                <td id="maxSpeed">0 Mbps</td>
+            </tr>
+        </tbody>
     </table>
 
-    <canvas id="speedChart"></canvas>
-</div>
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+        let downloadStartTime;
+        let downloadInterval;
+        let stopDownload = false;
+        let speeds = [];
+        let chart;
+        let ctx = document.getElementById('speedChart').getContext('2d');
+
+        // Initialize Chart.js
+        chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],
+                labels: [], // Time labels
                 datasets: [{
                     label: 'Download Speed (Mbps)',
-                    data: [],
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
+                    data: [], // Speed data
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
-                responsive: true,
                 scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Time (seconds)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Speed (Mbps)'
+                        }
+                    }
                 }
             }
         });
 
-        let controller;
-        let currentSpeedRecords = [];
-        let currentButton;
+        // Function to calculate speed in Mbps
+        function calculateSpeed(bytes, seconds) {
+            return (bytes / 1024 / 1024) / seconds * 8; // Convert to Mbps
+        }
 
-        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
-            stopTest();
-            controller = new AbortController();
-            let signal = controller.signal;
+        // Function to update the chart and table
+        function updateChartAndTable(timeElapsed, speed) {
+            // Update chart
+            chart.data.labels.push(timeElapsed.toFixed(2));
+            chart.data.datasets[0].data.push(speed);
+            chart.update();
 
-            let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
-            fileUrl = proxyUrl + encodeURIComponent(fileUrl);
+            // Update table
+            const averageSpeed = (speeds.reduce((a, b) => a + b, 0) / speeds.length) || 0;
+            const maxSpeed = Math.max(...speeds, 0);
 
-            currentSpeedRecords = [];
+            document.getElementById('averageSpeed').textContent = `${averageSpeed.toFixed(2)} Mbps`;
+            document.getElementById('maxSpeed').textContent = `${maxSpeed.toFixed(2)} Mbps`;
+        }
 
-            if (currentButton) {
-                currentButton.classList.remove(currentButton.classList[0]);
-            }
-            currentButton = event.target;
-            currentButton.classList.add(colorClass);
+        // Start download
+        document.getElementById('startDownload').addEventListener('click', async () => {
+            stopDownload = false;
+            speeds = [];
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.update();
 
+            document.getElementById('startDownload').disabled = true;
+            document.getElementById('stopDownload').disabled = false;
+
+            downloadStartTime = Date.now();
             try {
-                let response = await fetch(fileUrl, { signal });
-                if (!response.body) throw new Error("ReadableStream not supported");
-
-                let reader = response.body.getReader();
-                let startTime = performance.now();
-                let receivedBytes = 0;
-                let timestamps = [];
-                let firstChunkSkipped = false;
-                let firstChunkBytes = 0;
-
-                async function readChunks() {
-                    let { done, value } = await reader.read();
-                    if (done) return;
-
-                    receivedBytes += value.length;
-
-                    if (!firstChunkSkipped) {
-                        firstChunkSkipped = true;
-                        firstChunkBytes = value.length;
-                        return readChunks();
-                    } 
-
-                    let currentTime = (performance.now() - startTime) / 1000;
-                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
-
-                    currentSpeedRecords.push(speedMbps);
-                    timestamps.push(currentTime.toFixed(2));
-
-                    speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = currentSpeedRecords;
-                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
-                    speedChart.update();
-
-                    return readChunks();
+                const response = await fetch('http://172.22.15.54/files/100MB.zip');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                const reader = response.body.getReader();
+                let receivedLength = 0;
 
-                await readChunks();
+                downloadInterval = setInterval(() => {
+                    const timeElapsed = (Date.now() - downloadStartTime) / 1000;
+                    const speed = calculateSpeed(receivedLength, timeElapsed);
+                    speeds.push(speed);
+                    updateChartAndTable(timeElapsed, speed);
+                }, 1000);
 
-                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                let maxSpeed = Math.max(...currentSpeedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-
-            } catch (error) {
-                if (error.name === "AbortError") {
-                    console.log("Speed test stopped.");
-                    if (currentSpeedRecords.length > 0) {
-                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
-                        let maxSpeed = Math.max(...currentSpeedRecords);
-                        document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                        document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+                while (true) {
+                    if (stopDownload) {
+                        clearInterval(downloadInterval);
+                        reader.cancel();
+                        break;
                     }
-                } else {
-                    alert(`Error: ${error.message}`);
-                }
-            }
-        }
 
-        function stopTest() {
-            if (controller) {
-                controller.abort();
-                controller = null;
-                console.log("Speed test aborted.");
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        clearInterval(downloadInterval);
+                        break;
+                    }
+
+                    receivedLength += value.length;
+                }
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Download failed. Check the console for details.');
+            } finally {
+                document.getElementById('startDownload').disabled = false;
+                document.getElementById('stopDownload').disabled = true;
             }
-        }
+        });
+
+        // Stop download
+        document.getElementById('stopDownload').addEventListener('click', () => {
+            stopDownload = true;
+        });
     </script>
-<footer>
-    <img src="https://sltmobitel.lk/_ipx/_/images/logo.png" alt="SLTMobitel Logo">
-         <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
-         <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
-        </footer>
 </body>
 </html>
