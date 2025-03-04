@@ -219,19 +219,14 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
 
 
         async function fetchISPDetails() {
-           try {
-        // First, get the user's IP address
-        let ipResponse = await fetch("https://api64.ipify.org?format=json");
-        let ipData = await ipResponse.json();
-        let userIP = ipData.ip;
+    try {
+        // Fetch IP and ISP details from ip-api.com (JSON format)
+        let response = await fetch("https://ip-api.com/json/");
+        let data = await response.json();
 
-        // Then, get ISP details using the IP
-        let ispResponse = await fetch(`https://ipwho.is/${userIP}`);
-        let ispData = await ispResponse.json();
-
-        if (ispData.success) {
-            document.getElementById("ip-address").innerText = `IP Address: ${ispData.ip}`;
-            document.getElementById("isp").innerText = `ISP: ${ispData.isp}`;
+        if (data.status === "success") {
+            document.getElementById("ip-address").innerText = `IP Address: ${data.query}`;
+            document.getElementById("isp").innerText = `ISP: ${data.isp}`;
         } else {
             document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
             document.getElementById("isp").innerText = "ISP: Unable to fetch";
