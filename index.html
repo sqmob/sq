@@ -151,11 +151,11 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
 
                     receivedBytes += value.length;
 
-                    if (!firstChunkSkipped) {
+                   /* if (!firstChunkSkipped) {
                         firstChunkSkipped = true;
                         firstChunkBytes = value.length;
                         return readChunks();
-                    }
+                    } */
 
                     let currentTime = (performance.now() - startTime) / 1000;
                     let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
