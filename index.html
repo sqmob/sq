@@ -29,7 +29,7 @@
     </style>
 </head>
 <body>
-    <h1>Download Speed Monitor</h1>
+    <h1>local Speed Monitor</h1>
     <button id="startDownload">Start Download</button>
     <button id="stopDownload" disabled>Stop Download</button>
     <div id="chartContainer">
@@ -129,7 +129,10 @@
 
             downloadStartTime = Date.now();
             try {
-                const response = await fetch('http://172.22.15.54/files/100MB.zip');
+                const proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
+                const fileUrl = proxyUrl + encodeURIComponent("http://172.22.15.54/files/100MB.zip");
+
+                const response = await fetch(fileUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
