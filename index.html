@@ -99,10 +99,15 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
 
     <canvas id="speedChart"></canvas>
 <!-- Display User ISP and IP -->
-        <div id="network-details" style="margin-top: 20px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px;">
+        <!--<div id="network-details" style="margin-top: 20px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px;">
             <p id="ip-address">IP Address: Fetching...</p>
             <p id="isp">ISP: Fetching...</p>
-        </div>
+        </div> -->
+	<div class="details">
+        <p><strong>IP Address:</strong> <span id="ip"></span></p>
+        <p><strong>ISP:</strong> <span id="isp"></span></p>
+        <p><strong>Location:</strong> <span id="location"></span></p>
+    </div>  
     </div>	
          
 </div>
@@ -218,25 +223,19 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
         }
 
 
-        async function fetchISPDetails() {
-    try {
-        // Fetch IP and ISP details from ip-api.com (JSON format)
-        let response = await fetch("https://ip-api.com/json/");
-        let data = await response.json();
-
-        if (data.status === "success") {
-            document.getElementById("ip-address").innerText = `IP Address: ${data.query}`;
-            document.getElementById("isp").innerText = `ISP: ${data.isp}`;
-        } else {
-            document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
-            document.getElementById("isp").innerText = "ISP: Unable to fetch";
-        }
-    } catch (error) {
-        document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
-        document.getElementById("isp").innerText = "ISP: Unable to fetch";
-    }
-}
-        fetchISPDetails();
+     // Fetch details from ipapi.co
+        fetch('https://ipapi.co/json/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ip').textContent = data.ip;
+                document.getElementById('isp').textContent = data.org;
+                document.getElementById('location').textContent = `${data.city}, ${data.region}, ${data.country_name}`;
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+	    
+	    fetchISPDetails();
 						  
     </script>
 <footer>
