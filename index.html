@@ -1,179 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html> 
+<html lang="en"> 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Speed Monitor</title>
+    <title>Mobitel Speed Testing</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        #chartContainer {
-            width: 80%;
-            margin: 20px auto;
-        }
-        table {
-            width: 50%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
+      body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-image: url('https://www.ipinternational.net/wp-content/uploads/2021/11/iStock-1274394138-1.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+    min-height: 100vh; 
+}
+.container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;}
+button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px;}
+table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto; border-collapse: collapse;
+    background-color: rgba(0, 0, 0, 0.7); }
+        th, td { border: 1px solid white; padding: 10px; text-align: center;}
+        canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
+                border-radius: 5px;}
+        .light-green { background-color: lightgreen; }
+        .light-red { background-color: lightcoral; }
+        .light-blue { background-color: lightblue; }
+        .light-yellow { background-color: lightyellow; }
+        .light-pink { background-color: lightpink; }
+        .light-brown { background-color: #D2B48C; }
+        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; border-radius: 10px;}
     </style>
 </head>
 <body>
-    <h1>local Speed Monitor</h1>
-    <button id="startDownload">Start Download</button>
-    <button id="stopDownload" disabled>Stop Download</button>
-    <div id="chartContainer">
-        <canvas id="speedChart"></canvas>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Metric</th>
-                <th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Average Speed</td>
-                <td id="averageSpeed">0 Mbps</td>
-            </tr>
-            <tr>
-                <td>Maximum Speed</td>
-                <td id="maxSpeed">0 Mbps</td>
-            </tr>
-        </tbody>
-    </table>
-
+     <div class="container">
+    <h2>Network Data Speed Benchmarker</h2>
+         <div class="buttons-container">
+    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
+    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
+    <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
+    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
+    <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
+    <button onclick="testSpeed('https://api.codetabs.com/v1/proxy/?quest=http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
+    <button onclick="stopTest()">🛑 Stop Test</button>
+  </div>
+    <canvas id="speedChart"></canvas>
+</div>
     <script>
-        let downloadStartTime;
-        let downloadInterval;
-        let stopDownload = false;
-        let speeds = [];
-        let chart;
-        let ctx = document.getElementById('speedChart').getContext('2d');
+        let controller;
 
-        // Initialize Chart.js
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [], // Time labels
-                datasets: [{
-                    label: 'Download Speed (Mbps)',
-                    data: [], // Speed data
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {
-                            display: true,
-                            text: 'Time (seconds)'
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Speed (Mbps)'
-                        }
-                    }
-                }
-            }
-        });
-
-        // Function to calculate speed in Mbps
-        function calculateSpeed(bytes, seconds) {
-            return (bytes / 1024 / 1024) / seconds * 8; // Convert to Mbps
-        }
-
-        // Function to update the chart and table
-        function updateChartAndTable(timeElapsed, speed) {
-            // Update chart
-            chart.data.labels.push(timeElapsed.toFixed(2));
-            chart.data.datasets[0].data.push(speed);
-            chart.update();
-
-            // Update table
-            const averageSpeed = (speeds.reduce((a, b) => a + b, 0) / speeds.length) || 0;
-            const maxSpeed = Math.max(...speeds, 0);
-
-            document.getElementById('averageSpeed').textContent = `${averageSpeed.toFixed(2)} Mbps`;
-            document.getElementById('maxSpeed').textContent = `${maxSpeed.toFixed(2)} Mbps`;
-        }
-
-        // Start download
-        document.getElementById('startDownload').addEventListener('click', async () => {
-            stopDownload = false;
-            speeds = [];
-            chart.data.labels = [];
-            chart.data.datasets[0].data = [];
-            chart.update();
-
-            document.getElementById('startDownload').disabled = true;
-            document.getElementById('stopDownload').disabled = false;
-
-            downloadStartTime = Date.now();
+        async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
+            stopTest();
+            controller = new AbortController();
+            let signal = controller.signal;
+            
             try {
-                const proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
-                const fileUrl = proxyUrl + encodeURIComponent("http://172.22.15.54/files/100MB.zip");
+                let response = await fetch(fileUrl, { signal });
+                if (!response.body) throw new Error("ReadableStream not supported");
 
-                const response = await fetch(fileUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                let reader = response.body.getReader();
+                let startTime = performance.now();
+                let receivedBytes = 0;
+                
+                async function readChunks() {
+                    let { done, value } = await reader.read();
+                    if (done) return;
+
+                    receivedBytes += value.length;
+                    let currentTime = (performance.now() - startTime) / 1000;
+                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
+                    document.getElementById(`avg-speed-${resultId}`).innerText = speedMbps.toFixed(2);
+                    return readChunks();
                 }
-                const reader = response.body.getReader();
-                let receivedLength = 0;
 
-                downloadInterval = setInterval(() => {
-                    const timeElapsed = (Date.now() - downloadStartTime) / 1000;
-                    const speed = calculateSpeed(receivedLength, timeElapsed);
-                    speeds.push(speed);
-                    updateChartAndTable(timeElapsed, speed);
-                }, 1000);
-
-                while (true) {
-                    if (stopDownload) {
-                        clearInterval(downloadInterval);
-                        reader.cancel();
-                        break;
-                    }
-
-                    const { done, value } = await reader.read();
-                    if (done) {
-                        clearInterval(downloadInterval);
-                        break;
-                    }
-
-                    receivedLength += value.length;
-                }
+                await readChunks();
             } catch (error) {
-                console.error('Download failed:', error);
-                alert('Download failed. Check the console for details.');
-            } finally {
-                document.getElementById('startDownload').disabled = false;
-                document.getElementById('stopDownload').disabled = true;
+                if (error.name !== "AbortError") {
+                    alert(`Error: ${error.message}`);
+                }
             }
-        });
+        }
 
-        // Stop download
-        document.getElementById('stopDownload').addEventListener('click', () => {
-            stopDownload = true;
-        });
+        function stopTest() {
+            if (controller) {
+                controller.abort();
+            }
+        }
     </script>
+<footer>
+    <img src="https://sltmobitel.lk/_ipx/_/images/logo.png" alt="SLTMobitel Logo">
+         <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
+         <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
+</footer>
 </body>
 </html>
