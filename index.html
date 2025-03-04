@@ -28,41 +28,55 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
         th, td { border: 1px solid white; padding: 10px; text-align: center;}
         canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
                 border-radius: 5px;}
-        .light-green { background-color: lightgreen; }
-        .light-red { background-color: lightcoral; }
-        .light-blue { background-color: lightblue; }
-        .light-yellow { background-color: lightyellow; }
-        .light-pink { background-color: lightpink; }
-        .light-brown { background-color: #D2B48C; }
-        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; border-radius: 10px;}
     </style>
 </head>
 <body>
      <div class="container">
     <h2>Network Data Speed Benchmarker</h2>
-         <div class="buttons-container">
-    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
-    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
-    <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-    <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
-    <button onclick="testSpeed('https://api.codetabs.com/v1/proxy/?quest=http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
-    <button onclick="stopTest()">🛑 Stop Test</button>
-  </div>
     <canvas id="speedChart"></canvas>
-</div>
+    <div class="buttons-container">
+        <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
+        <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
+        <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
+        <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
+        <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
+        <button onclick="testSpeed('https://api.codetabs.com/v1/proxy/?quest=http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
+        <button onclick="stopTest()">🛑 Stop Test</button>
+    </div>
     <script>
+        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Download Speed (Mbps)',
+                    data: [],
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Time (s)' } },
+                    y: { title: { display: true, text: 'Speed (Mbps)' } }
+                }
+            }
+        });
+        
         let controller;
-
         async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
             stopTest();
             controller = new AbortController();
             let signal = controller.signal;
+            let timestamps = [];
+            let speedRecords = [];
             
             try {
                 let response = await fetch(fileUrl, { signal });
                 if (!response.body) throw new Error("ReadableStream not supported");
-
+                
                 let reader = response.body.getReader();
                 let startTime = performance.now();
                 let receivedBytes = 0;
@@ -70,32 +84,36 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
-
                     receivedBytes += value.length;
                     let currentTime = (performance.now() - startTime) / 1000;
                     let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
-                    document.getElementById(`avg-speed-${resultId}`).innerText = speedMbps.toFixed(2);
+                    
+                    speedRecords.push(speedMbps);
+                    timestamps.push(currentTime.toFixed(2));
+                    speedChart.data.labels = timestamps;
+                    speedChart.data.datasets[0].data = speedRecords;
+                    speedChart.update();
+                    
                     return readChunks();
                 }
-
                 await readChunks();
             } catch (error) {
-                if (error.name !== "AbortError") {
-                    alert(`Error: ${error.message}`);
-                }
+                console.error("Speed test error:", error);
             }
         }
-
         function stopTest() {
             if (controller) {
                 controller.abort();
+                controller = null;
+                console.log("Speed test stopped.");
             }
         }
     </script>
+</div>
 <footer>
     <img src="https://sltmobitel.lk/_ipx/_/images/logo.png" alt="SLTMobitel Logo">
-         <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
-         <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
+    <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
+    <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
 </footer>
 </body>
 </html>
