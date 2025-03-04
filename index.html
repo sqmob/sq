@@ -24,25 +24,114 @@
 .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;}
 button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px;}
 table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto; border-collapse: collapse;
+							 
+								 
+					
+	   
+			   
+							
+					  
+						 
+						   
+	   
+			  
+						  
+					
+						  
+						   
+							
+								  
     background-color: rgba(0, 0, 0, 0.7); }
+	   
+			   
         th, td { border: 1px solid white; padding: 10px; text-align: center;}
         canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
+						   
+	   
+			   
+						  
+					 
+						  
+											  
+								 
                 border-radius: 5px;}
+	   
+        .light-green { background-color: lightgreen; }
+        .light-red { background-color: lightcoral; }
+        .light-blue { background-color: lightblue; }
+        .light-yellow { background-color: lightyellow; }
+        .light-pink { background-color: lightpink; }
+        .light-brown { background-color: #D2B48C; }
+		   
+        h2 { background-color: rgba(0, 0, 0, 0.7); padding: 10px; display: inline-block; border-radius: 10px;}
+       /* footer {background-color: lightgrey;color: black; text-align: center; padding: 10px; margin-top: 20px; width: 100%; font-size: 14px;
+} */
+							
+	   
     </style>
 </head>
 <body>
      <div class="container">
     <h2>Network Data Speed Benchmarker</h2>
+         <div class="buttons-container">
+    <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
+    <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
+    <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
+    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
+    <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
+    <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
+    <button onclick="stopTest()">🛑 Stop Test</button>
+  </div>
+
+    <table>
+        <tr>
+            <th>Test Location</th>
+            <th>Average Speed (Mbps)</th>
+            <th>Maximum Speed (Mbps)</th>
+        </tr>
+        <tr>
+            <td>France</td>
+            <td id="avg-speed-result1">-</td>
+            <td id="max-speed-result1">-</td>
+        </tr>
+        <tr>
+            <td>USA</td>
+            <td id="avg-speed-result2">-</td>
+            <td id="max-speed-result2">-</td>
+        </tr>
+        <tr>
+            <td>UK</td>
+            <td id="avg-speed-result3">-</td>
+            <td id="max-speed-result3">-</td>
+        </tr>
+        <tr>
+            <td>Singapore</td>
+            <td id="avg-speed-result4">-</td>
+            <td id="max-speed-result4">-</td>
+        </tr>
+        <tr>
+            <td>Qatar</td>
+            <td id="avg-speed-result5">-</td>
+            <td id="max-speed-result5">-</td>
+        </tr>
+        
+        <tr>
+            <td>Local</td>
+            <td id="avg-speed-result6">-</td>
+            <td id="max-speed-result6">-</td>
+       </tr>
+				   
+    </table>
+
     <canvas id="speedChart"></canvas>
-    <div class="buttons-container">
-        <button onclick="testSpeed('https://proof.ovh.net/files/100Mb.dat', 1000, 'result1', 'light-green')">Test Speed - France</button>
-        <button onclick="testSpeed('http://2uqualservsweb.com/100M.bin', 10000, 'result2', 'light-red')">Test Speed - USA</button>
-        <button onclick="testSpeed('http://2equalservuweb.com/100M.bin', 10000, 'result3', 'light-blue')">Test Speed - UK</button>
-        <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
-        <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
-        <button onclick="testSpeed('https://api.codetabs.com/v1/proxy/?quest=http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
-        <button onclick="stopTest()">🛑 Stop Test</button>
-    </div>
+<!-- Display User ISP and IP -->
+        <div id="network-details" style="margin-top: 20px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px;">
+            <p id="ip-address">IP Address: Fetching...</p>
+            <p id="isp">ISP: Fetching...</p>
+        </div>
+    </div>	
+         
+</div>
     <script>
         let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
             type: 'line',
@@ -64,56 +153,116 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
                 }
             }
         });
-        
+
         let controller;
+        let currentSpeedRecords = [];
+        let currentButton;
+
         async function testSpeed(fileUrl, fileSizeMB, resultId, colorClass) {
             stopTest();
             controller = new AbortController();
             let signal = controller.signal;
-            let timestamps = [];
-            let speedRecords = [];
-            
+
+            let proxyUrl = "https://api.codetabs.com/v1/proxy/?quest=";
+            fileUrl = proxyUrl + encodeURIComponent(fileUrl);
+
+            currentSpeedRecords = [];
+
+            if (currentButton) {
+                currentButton.classList.remove(currentButton.classList[0]);
+            }
+            currentButton = event.target;
+            currentButton.classList.add(colorClass);
+
             try {
                 let response = await fetch(fileUrl, { signal });
                 if (!response.body) throw new Error("ReadableStream not supported");
-                
+
                 let reader = response.body.getReader();
                 let startTime = performance.now();
                 let receivedBytes = 0;
-                
+                let timestamps = [];
+                let firstChunkSkipped = false;
+                let firstChunkBytes = 0;
+
                 async function readChunks() {
                     let { done, value } = await reader.read();
                     if (done) return;
+
                     receivedBytes += value.length;
+
+                    if (!firstChunkSkipped) {
+                        firstChunkSkipped = true;
+                        firstChunkBytes = value.length;
+                        return readChunks();
+                    } 
+
                     let currentTime = (performance.now() - startTime) / 1000;
-                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
-                    
-                    speedRecords.push(speedMbps);
+                    let speedMbps = ((receivedBytes - firstChunkBytes) * 8) / (currentTime * 1024 * 1024);
+
+                    currentSpeedRecords.push(speedMbps);
                     timestamps.push(currentTime.toFixed(2));
+
                     speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = speedRecords;
+                    speedChart.data.datasets[0].data = currentSpeedRecords;
+                    speedChart.data.datasets[0].borderColor = colorClass.replace("light-", "");
                     speedChart.update();
-                    
+
                     return readChunks();
                 }
+
                 await readChunks();
+
+                let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
+                let maxSpeed = Math.max(...currentSpeedRecords);
+
+                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
+                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+
             } catch (error) {
-                console.error("Speed test error:", error);
+                if (error.name === "AbortError") {
+                    console.log("Speed test stopped.");
+                    if (currentSpeedRecords.length > 0) {
+                        let avgSpeed = currentSpeedRecords.reduce((a, b) => a + b, 0) / currentSpeedRecords.length;
+                        let maxSpeed = Math.max(...currentSpeedRecords);
+                        document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
+                        document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
+                    }
+                } else {
+                    alert(`Error: ${error.message}`);
+                }
             }
         }
+
         function stopTest() {
             if (controller) {
                 controller.abort();
                 controller = null;
-                console.log("Speed test stopped.");
+                console.log("Speed test aborted.");
+		 																	  
             }
         }
+
+
+        async function fetchISPDetails() {
+            try {
+                let response = await fetch("http://ip-api.com/json/");
+                let data = await response.json();
+                document.getElementById("ip-address").innerText = `IP Address: ${data.query}`;
+                document.getElementById("isp").innerText = `ISP: ${data.isp}`;
+            } catch {
+                document.getElementById("ip-address").innerText = "IP Address: Unable to fetch";
+                document.getElementById("isp").innerText = "ISP: Unable to fetch";
+            }
+        }
+
+        fetchISPDetails();
+						  
     </script>
-</div>
 <footer>
     <img src="https://sltmobitel.lk/_ipx/_/images/logo.png" alt="SLTMobitel Logo">
-    <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
-    <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
-</footer>
+         <p>© Copyright: Service Quality Division, 2025. SLTMobitel </p>
+         <p><a href="mailto:sqfeedback@mobitel.lk" style="color: white;"> sqfeedback@mobitel.lk</a></p>
+        </footer>
 </body>
 </html>
