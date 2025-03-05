@@ -23,9 +23,19 @@
     min-height: 100vh; 
 }
 .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;}
+					   
+						 
+		 
 button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px;}
+							   
+						 
+							
+							   
+		 
 table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto; border-collapse: collapse;
 									  
+									  
+							 
     background-color: rgba(0, 0, 0, 0.7); }
 	        th, td { border: 1px solid white; padding: 10px; text-align: center;}
         canvas { margin-top: 20px; width: 100%; max-width: 900px; background-color: rgba(0, 0, 0, 0.7); border: 2px solid white; 
@@ -55,7 +65,8 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
     <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4', 'light-yellow')">Test Speed - Singapore</button>
     <button onclick="testSpeed('http://86.62.240.181/dl/1000000000.file', 100, 'result5', 'light-brown')">Test Speed - Qatar</button>
     <button onclick="testSpeed('http://172.22.15.54/files/100MB.zip', 1000, 'result6', 'light-pink')">Local Speed Testing</button>
-    <button onclick="stopTest()">🛑 Stop Test</button>
+    <button onclick="submitTestData()">Submit Test Data</button>
+	<button onclick="stopTest()">🛑 Stop Test</button>
   </div>
 
     <table>
@@ -237,6 +248,57 @@ table { margin-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margi
             });
 	    
 	    fetchISPDetails();
+		
+		
+		// submit data
+		
+		async function submitTestData() {
+            const testData = {
+                eventId: Date.now(),
+                france: {
+                    avgSpeed: document.getElementById("avg-speed-result1").innerText,
+                    maxSpeed: document.getElementById("max-speed-result1").innerText
+					
+                },
+								 
+                usa: {
+                    avgSpeed: document.getElementById("avg-speed-result2").innerText,
+                    maxSpeed: document.getElementById("max-speed-result2").innerText
+                },
+				uk: {
+                    avgSpeed: document.getElementById("avg-speed-result3").innerText,
+                    maxSpeed: document.getElementById("max-speed-result3").innerText
+                },
+				
+				singapore: {
+                    avgSpeed: document.getElementById("avg-speed-result4").innerText,
+                    maxSpeed: document.getElementById("max-speed-result4").innerText
+                },
+				
+				qatar: {
+                    avgSpeed: document.getElementById("avg-speed-result5").innerText,
+                    maxSpeed: document.getElementById("max-speed-result5").innerText
+                },
+				
+				local: {
+                    avgSpeed: document.getElementById("avg-speed-result6").innerText,
+                    maxSpeed: document.getElementById("max-speed-result6").innerText
+                },
+				
+				
+				
+            };
+            
+            await fetch('https://your-github-page-url/data.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(testData)
+            });
+            
+            alert("Test data submitted successfully!");
+			
+			}
+		
 						  
     </script>
 <footer>
