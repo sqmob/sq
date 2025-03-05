@@ -3,118 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speed Test</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Speed Test Data</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; padding: 20px; }
-        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
-        table { margin-top: 20px; width: 50%; margin-left: auto; margin-right: auto; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        canvas { margin-top: 20px; width: 100%; max-width: 600px; }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h2>Speed Test</h2>
-    <button onclick="testSpeed('https://proof.ovh.net/files/1Gb.dat', 1000, 'result1')">Test Speed - OVH</button>
-    <button onclick="testSpeed('http://speedtest.ams2.nl.leaseweb.net/10000mb.bin', 10000, 'result2')">Test Speed - AMS2</button>
-    <button onclick="testSpeed('http://speedtest.mtl2.ca.leaseweb.net/10000mb.bin', 10000, 'result3')">Test Speed - MTL2</button>
-    <button onclick="testSpeed('http://speedtest.singapore.linode.com/100MB-singapore.bin', 100, 'result4')">Test Speed - Singapore</button>
-    
+    <h2>Submitted Speed Test Data</h2>
     <table>
-        <tr>
-            <th>Test Location</th>
-            <th>Average Speed (Mbps)</th>
-            <th>Maximum Speed (Mbps)</th>
-        </tr>
-        <tr>
-            <td>OVH</td>
-            <td id="avg-speed-result1">-</td>
-            <td id="max-speed-result1">-</td>
-        </tr>
-        <tr>
-            <td>AMS2</td>
-            <td id="avg-speed-result2">-</td>
-            <td id="max-speed-result2">-</td>
-        </tr>
-        <tr>
-            <td>MTL2</td>
-            <td id="avg-speed-result3">-</td>
-            <td id="max-speed-result3">-</td>
-        </tr>
-        <tr>
-            <td>Singapore</td>
-            <td id="avg-speed-result4">-</td>
-            <td id="max-speed-result4">-</td>
-        </tr>
+        <thead>
+            <tr>
+                <th>Event ID</th>
+                <th>France - Avg Speed (Mbps)</th>
+                <th>France - Max Speed (Mbps)</th>
+                <th>USA - Avg Speed (Mbps)</th>
+                <th>USA - Max Speed (Mbps)</th>
+                <th>UK - Avg Speed (Mbps)</th>
+                <th>UK - Max Speed (Mbps)</th>
+                <th>Singapore - Avg Speed (Mbps)</th>
+                <th>Singapore - Max Speed (Mbps)</th>
+                <th>Qatar - Avg Speed (Mbps)</th>
+                <th>Qatar - Max Speed (Mbps)</th>
+                <th>Local - Avg Speed (Mbps)</th>
+                <th>Local - Max Speed (Mbps)</th>
+            </tr>
+        </thead>
+        <tbody id="data-table">
+        </tbody>
     </table>
-
-    <canvas id="speedChart"></canvas>
     
     <script>
-        let speedChart = new Chart(document.getElementById('speedChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Download Speed (Mbps)',
-                    data: [],
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { title: { display: true, text: 'Time (s)' } },
-                    y: { title: { display: true, text: 'Speed (Mbps)' } }
-                }
-            }
-        });
-
-        async function testSpeed(fileUrl, fileSizeMB, resultId) {
-            try {
-                let response = await fetch(fileUrl);
-                if (!response.body) throw new Error("ReadableStream not supported");
-
-                let reader = response.body.getReader();
-                let startTime = performance.now();
-                let receivedBytes = 0;
-                let speedRecords = [];
-                let timestamps = [];
-                
-                async function readChunks() {
-                    let { done, value } = await reader.read();
-                    if (done) return;
-
-                    let currentTime = (performance.now() - startTime) / 1000; // Time in seconds
-                    receivedBytes += value.length;
-                    let speedMbps = (receivedBytes * 8) / (currentTime * 1024 * 1024);
-                    
-                    speedRecords.push(speedMbps);
-                    timestamps.push(currentTime.toFixed(2));
-
-                    // Update chart in real time
-                    speedChart.data.labels = timestamps;
-                    speedChart.data.datasets[0].data = speedRecords;
-                    speedChart.update();
-
-                    return readChunks();
-                }
-                
-                await readChunks();
-
-                // Calculate final speed metrics
-                let avgSpeed = speedRecords.reduce((a, b) => a + b, 0) / speedRecords.length;
-                let maxSpeed = Math.max(...speedRecords);
-
-                document.getElementById(`avg-speed-${resultId}`).innerText = avgSpeed.toFixed(2);
-                document.getElementById(`max-speed-${resultId}`).innerText = maxSpeed.toFixed(2);
-
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            }
+        async function fetchData() {
+            let response = await fetch('https://sqmob.github.io/sq/data.json');
+            let data = await response.json();
+            let tableBody = document.getElementById("data-table");
+            
+            data.forEach(entry => {
+                let row = `<tr>
+                    <td>${entry.eventId}</td>
+                    <td>${entry.france.avgSpeed}</td>
+                    <td>${entry.france.maxSpeed}</td>
+                    <td>${entry.usa.avgSpeed}</td>
+                    <td>${entry.usa.maxSpeed}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
         }
+        fetchData();
     </script>
 </body>
 </html>
